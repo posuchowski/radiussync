@@ -1,0 +1,28 @@
+{% extends "radical.html" %}
+
+{% block main %}
+    <div id="form_wrapper">
+        <div style="float:left; clear:left; height:3em;">
+            <br>
+            <p id="add_host">Add a Persistent Host</p>
+            <br>
+        </div>
+        <div id="spacer">&nbsp;</div>
+        <div id="err_div" style="display:none"></div>
+        <div id="form_itself">
+            <form id='addform' action='/django/radius/radiusadd/' method='POST'>{% csrf_token %}
+            <table class="django">
+                {{ form.as_table }}
+            </table>
+            <br>
+            <span id="button">
+                <button id='vlan_button' type='button' value='Get Vlan ID'>Get Vlan ID</button>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <input id='submit_button' type='submit' value='Submit' onClick="return validate();">
+            </span>
+            </table>
+            </form>
+            &nbsp;<BR>
+        </div>
+    </div>
+{% endblock %}

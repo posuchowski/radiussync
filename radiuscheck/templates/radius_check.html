@@ -1,0 +1,31 @@
+{% extends "radical.html" %}
+
+{% block main %}
+    <div id="form_wrapper">
+        <div style="float:left; clear:left; height:3em;">
+            <p id="check_host">Enter Hostname or MAC.<br>
+            Hostname entry will check both eth1 and eth0.</p>
+            <br>
+        </div>
+        <br>&nbsp;<br>
+        <div id="light_div">
+            <img id="light_img" src="{{ STATIC_URL }}radiuscheck/img/traffic_light_off.png" />
+        </div>
+        <div id="form_itself">
+            <form id='macform' action='radauth' method='POST'>{% csrf_token %}
+            <table>
+                {{ form.as_table }}
+            </table>
+            <br>
+            <span id="button_spacer">&nbsp;</span>
+            <span><input id='submit_button' type='submit' value='Submit' onClick="return getAuthOutput();">
+            </span>
+            </table>
+            </form>
+            &nbsp;<BR>
+        </div>
+    </div>
+    <div id="results_div">
+        <code id="cmd_out"></code>
+    </div>
+{% endblock %}

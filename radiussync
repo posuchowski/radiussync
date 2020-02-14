@@ -1,0 +1,152 @@
+#!/usr/bin/python
+
+#
+# radiussync: script which collates & syncs the radius database with inventory/ubersmith
+#
+
+import argparse, os, sys, syslog
+from ConfigParser import SafeConfigParser
+
+import radiussync.database as database
+
+options      = None
+credentials  = None
+default_cred = os.path.join( '/etc', os.path.basename( sys.argv[0] ), 'credentials' )
+
+def parse_argv():
+    global options
+
+    parser = argparse.ArgumentParser(
+        description = 'Sync servers in inventory with Radius authentication database'
+    )
+    parser.add_argument( '-v', '--verbose', dest='verbose',  action='store_true', help="Less is not more. More is more." )
+    parser.add_argument( '-c', '--count',   dest='count',    action='store_true', help="Print the number of inserts made into the radius tables." )
+    parser.add_argument( '-d', '--delete',   dest='delete', help="Delete persistent MAC from the database." )
+    parser.add_argument( '-D', '--DEBUG',   dest='debug',    action='store_true',
+        help="Instantiate classes in DEBUG mode, with more output. This will create non-temporary tempServers and tempVlanInfo tables in the radius database." )
+    parser.add_argument( '-p', '--persistent-only',  dest='persistent_only',    action='store_true',
+        help="Only process radius.persistentHosts for addition to the auth tables." )
+    parser.add_argument( '-C', '--cred',    dest='credfile', default='/etc/radiussync/credentials',
+        help="Specify MySQL credentials file, which should be in ConfigParser format (INI). Default is /etc/radiussync/credentials" )
+
+    options = parser.parse_args()
+
+def parse_credfile():
+    global credentials
+    credentials = SafeConfigParser()
+    credfile    = options.credfile
+
+    if not os.path.isfile( credfile ):
+        _verbose_err( "FATAL: os.path.isfile returns False on credentials filename: %s" % credfile )
+        _verbose_log( "FATAL: os.path.isfile returns False on credentials filename: %s" % credfile )
+        sys.exit( 2 )
+
+    result = credentials.read( options.credfile )
+    if result[0] != options.credfile:
+        _verbose_err( "FATAL: Problem reading credentials file at %s" % options.credfile )
+        _verbose_log( "FATAL: Problem reading credentials file at %s" % options.credfile )
+        sys.exit( 2 )
+
+    if options.verbose:
+        for s in credentials.sections():
+            print "Got credentials for database: %s" % s
+
+def cred_to_dict( section ):
+    creddict = {}
+    for key in credentials.options( section ):
+        creddict[ key ] = credentials.get( section, key )
+    return creddict
+
+def _verbose_out( msg ):
+    if options.verbose:
+        print msg
+
+def _verbose_err( msg ):
+    if options.verbose:
+        sys.stderr.write( msg )
+        sys.stderr.write( '\n' )
+
+def _verbose_log( msg ):
+    if options.verbose:
+        syslog.syslog( syslog.LOG_INFO, msg )
+
+def _debug( msg ):
+    if options.debug:
+        sys.stderr.write( msg )
+        sys.stderr.write( '\n' )
+
+
+#
+# MAIN
+#
+
+if __name__ == '__main__':
+
+    # count: insert radcheck, insert radreply, update radcheck
+    result = more = ( 0, 0, 0 )
+
+    parse_argv()
+    parse_credfile()
+
+    syslog.openlog( 'radiussync', syslog.LOG_LOCAL0 )
+    syslog.syslog( syslog.LOG_INFO, "Starting" )
+    if options.verbose: print "Starting"
+
+    worker = database.Collator( cred_to_dict( 'inventory' ), cred_to_dict( 'radius' ), DEBUG=options.debug )
+    worker.enable_warnings()
+    worker.useRealTables( True )  #DEBUG (or not)
+
+    if options.delete:
+
+        if options.verbose:
+            print "Deleting MAC address %s from the radius tables..." % options.delete
+        worker.delete_persistent( options.delete )
+
+    elif options.persistent_only:
+
+        if options.verbose:
+            print "Adding persistent host definitions..."
+        more = worker.add_persistent()
+
+    else:
+
+        if options.verbose:
+            print "Making radius.tempServers..."
+        worker.make_tempServers()
+
+        if options.verbose:
+            print "Making nonredundant radius.servers table..."
+        worker.make_servers()
+
+        if options.verbose:
+            print "Making radius.tempVlanInfo..."
+        worker.make_tempVlanInfo()
+
+        if options.verbose:
+            print "Making radius.radcheck and radius.radreply tables..."
+        result = worker.make_radiusDB()
+
+        if options.verbose:
+            print "Adding persistent host definitions..."
+        more = worker.add_persistent()
+
+
+    if options.count:
+
+        count = ( result[0] + more[0], result[1] + more[1], result[2] + more[2] )
+        syslog.syslog( syslog.LOG_INFO,
+            "%s inserts into radcheck; %s inserts into radreply; %s updates in radreply" % count
+        )
+
+        if options.delete:
+            syslog.syslog( syslog.LOG_INFO,
+                "1 mac deleted from radius tables ( %s )" % options.delete
+            )
+        print "\nSummary:\n%s inserts into radcheck\n%s inserts into radreply\n%s updates in radreply" % count
+
+        if options.delete:
+            print "1 mac deleted from radcheck, radreply"
+
+    syslog.syslog( syslog.LOG_INFO, "Finished" )
+    if options.verbose: print "Finished"
+

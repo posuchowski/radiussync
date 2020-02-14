@@ -1,0 +1,192 @@
+body {
+    font-family: sans-serif;
+}
+
+div {
+    display: block;
+    float: left;
+    clear: both;
+    width: 100%;
+}
+
+div#title {
+    text-align: center;
+}
+
+div#link_bar {
+    height: 1.5em;
+}
+
+div#form_wrapper {
+    text-align: center;
+    width: 100%;
+}
+
+div#light_div {
+    float: left;
+    clear: none;
+    margin: 0 auto;
+    width: 15em;
+}
+
+div#form_itself {
+    float: left;
+    clear: right;
+    margin: 0 auto;
+    width: 30em;
+    min-width: 20em;
+    text-align: left;
+}
+
+div#results_div {
+    width: 80%;
+    margin: 2em 2em 2em 5em;
+    border: 1px solid gray;
+    padding: 1em;
+    min-height: 10em;
+}
+
+div#list_wrapper {
+    width: 100%;
+}
+
+div#err_div {
+    float: left;
+    clear: left;
+    margin: 0 auto;
+    width: 30%;
+    text-align: left;
+    font-size: smaller;
+}
+
+div#spacer {
+    display: block;
+    height: 3em;
+    width: 100%;
+    float: left;
+    clear: both;
+}
+ 
+span {
+    width: 10%;
+    min-width: 10em;
+    /* display: block; */
+    float: left;
+    clear: left;
+    margin: 0 auto;
+    margin-left: 14%;
+    text-align: center;
+}
+
+span#button {
+    width: 25em;
+    float: left;
+    clear: left;
+}
+
+span#leftlink {
+    left: 50%;
+}
+
+span#middle {
+    float: center;
+    clear: none;
+}
+
+span#right_choice {
+    /* float: left; */
+    clear: right;
+}
+
+span#table_ctl {
+    width: auto;
+    float: right;
+    right: 100%;
+    margin-left: 0%;
+    clear: right;
+    font-size: smaller;
+    text-align: right;
+}
+
+span#result_count {
+    width: 15em;
+    float: left;
+    clear: left;
+    font-size: smaller;
+    text-align: left;
+    font-weight: bold;
+    margin-left: 3em;
+}
+
+/*
+ * TABLE OBJECTS
+ *
+ */
+table {
+    min-width: 30em;
+    margin-left: 5em;
+    border-collapse: collapse;
+}
+table.django th {
+    min-width: 12em;
+}
+table#host_list {
+    margin-left: 1em;
+    border: 6px solid gray;
+    clear: both;
+}
+th {
+    font-size: smaller;
+    font-variant: small-caps;
+    text-align: left;
+}
+th.tabletop {
+    width: 50%;
+    height: 3em;
+    font-size: larger;
+    text-align: center;
+}
+tr.bord {
+    border-bottom: 3px solid gray;
+}
+tr.head {
+    border: 3px solid gray;
+    height: 2em;
+}
+td {
+    font-size: smaller;
+    height: 2em;
+    padding: 0px 5px 0px 5px;
+}
+td.title {
+    height: 1.5em;
+    font-weight: bold;
+    font-variant: small-caps;
+}
+td.bord {
+    border: 1px solid gray;
+}
+label {
+    min-width: 20em;
+}
+
+
+/*
+ * THE SMALL STUFF
+ *
+ */
+hr {
+    display: block;
+    width: 100%;
+    clear: both;
+}
+
+p {
+    font-weight: bold;
+}
+
+a:link {text-decoration:none;}
+a:visited {text-decoration:none;}
+a:hover {text-decoration:underline;}
+a:active {text-decoration:underline;}
+

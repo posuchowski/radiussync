@@ -1,0 +1,78 @@
+--------------------------------------------------
+FixtureInstaller.__init__(): I'm done. Enjoy.
+Created (or not) database radius_test
+FixtureInstaller._mk_table(): tablename = persistentHosts, tabledef = radius.persistentHosts
+fix in fixture: radius.persistentHosts (['hostname', 'ip_eth0', 'ip_eth1', 'vlan_id', 'table', 'mac_eth1', 'mac_eth0'])
+Filling table `persistentHosts`...
+	Query: INSERT INTO persistentHosts ( hostname, ip_eth0, ip_eth1, mac_eth0, mac_eth1, vlan_id ) VALUES ( 'www.djangotest.org', '10.1.1.1', '172.16.1.1', '00-00-00-00-00-00', 'AA-AA-AA-AA-AA-AA', '999999' );
+Created (or not) database radius_test
+FixtureInstaller._mk_table(): tablename = radcheck, tabledef = radius.radcheck
+fix in fixture: radius.radcheck (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radcheck`...
+	Query: INSERT INTO radcheck ( attribute, op, username, value ) VALUES ( 'Cleartext-Password', ':=', '00-00-00-00-00-00', '00-00-00-00-00-00' );
+Created (or not) database radius_test
+FixtureInstaller._mk_table(): tablename = radreply, tabledef = radius.radreply
+fix in fixture: radius.radreply (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radreply`...
+	Query: INSERT INTO radreply ( attribute, op, username, value ) VALUES ( 'Tunnel-Type', ':=', '00-00-00-00-00-00', '13' );
+fix in fixture: radius.radreply (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radreply`...
+	Query: INSERT INTO radreply ( attribute, op, username, value ) VALUES ( 'Tunnel-Medium-Type', ':=', '00-00-00-00-00-00', '6' );
+fix in fixture: radius.radreply (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radreply`...
+	Query: INSERT INTO radreply ( attribute, op, username, value ) VALUES ( 'Tunnel-Private-Group-ID', ':=', '00-00-00-00-00-00', '999999' );
+
+Called FixtureInstaller.remove(): Wish me luck!
+( 5 fixtures to be removed )
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.persistentHosts WHERE hostname = 'www.djangotest.org' AND ip_eth0 = '10.1.1.1' AND ip_eth1 = '172.16.1.1' AND vlan_id = '999999' AND mac_eth1 = 'AA-AA-AA-AA-AA-AA' AND mac_eth0 = '00-00-00-00-00-00' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radcheck WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '00-00-00-00-00-00' AND attribute = 'Cleartext-Password' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '13' AND attribute = 'Tunnel-Type' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '6' AND attribute = 'Tunnel-Medium-Type' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '999999' AND attribute = 'Tunnel-Private-Group-ID' ;
+FixtureInstaller.remove(): FINISHED.
+--------------------------------------------------
+FixtureInstaller.__init__(): I'm done. Enjoy.
+Created (or not) database radius_test
+FixtureInstaller._mk_table(): tablename = persistentHosts, tabledef = radius.persistentHosts
+fix in fixture: radius.persistentHosts (['hostname', 'ip_eth0', 'ip_eth1', 'vlan_id', 'table', 'mac_eth1', 'mac_eth0'])
+Filling table `persistentHosts`...
+	Query: INSERT INTO persistentHosts ( hostname, ip_eth0, ip_eth1, mac_eth0, mac_eth1, vlan_id ) VALUES ( 'www.djangotest.org', '10.1.1.1', '172.16.1.1', '00-00-00-00-00-00', 'AA-AA-AA-AA-AA-AA', '999999' );
+Created (or not) database radius_test
+FixtureInstaller._mk_table(): tablename = radcheck, tabledef = radius.radcheck
+fix in fixture: radius.radcheck (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radcheck`...
+	Query: INSERT INTO radcheck ( attribute, op, username, value ) VALUES ( 'Cleartext-Password', ':=', '00-00-00-00-00-00', '00-00-00-00-00-00' );
+Created (or not) database radius_test
+FixtureInstaller._mk_table(): tablename = radreply, tabledef = radius.radreply
+fix in fixture: radius.radreply (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radreply`...
+	Query: INSERT INTO radreply ( attribute, op, username, value ) VALUES ( 'Tunnel-Type', ':=', '00-00-00-00-00-00', '13' );
+fix in fixture: radius.radreply (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radreply`...
+	Query: INSERT INTO radreply ( attribute, op, username, value ) VALUES ( 'Tunnel-Medium-Type', ':=', '00-00-00-00-00-00', '6' );
+fix in fixture: radius.radreply (['username', 'table', 'op', 'value', 'attribute'])
+Filling table `radreply`...
+	Query: INSERT INTO radreply ( attribute, op, username, value ) VALUES ( 'Tunnel-Private-Group-ID', ':=', '00-00-00-00-00-00', '999999' );
+
+Called FixtureInstaller.remove(): Wish me luck!
+( 10 fixtures to be removed )
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.persistentHosts WHERE hostname = 'www.djangotest.org' AND ip_eth0 = '10.1.1.1' AND ip_eth1 = '172.16.1.1' AND vlan_id = '999999' AND mac_eth1 = 'AA-AA-AA-AA-AA-AA' AND mac_eth0 = '00-00-00-00-00-00' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radcheck WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '00-00-00-00-00-00' AND attribute = 'Cleartext-Password' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '13' AND attribute = 'Tunnel-Type' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '6' AND attribute = 'Tunnel-Medium-Type' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '999999' AND attribute = 'Tunnel-Private-Group-ID' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.persistentHosts WHERE hostname = 'www.djangotest.org' AND ip_eth0 = '10.1.1.1' AND ip_eth1 = '172.16.1.1' AND vlan_id = '999999' AND mac_eth1 = 'AA-AA-AA-AA-AA-AA' AND mac_eth0 = '00-00-00-00-00-00' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radcheck WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '00-00-00-00-00-00' AND attribute = 'Cleartext-Password' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '13' AND attribute = 'Tunnel-Type' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '6' AND attribute = 'Tunnel-Medium-Type' ;
+FixtureInstaller.delete_where(): QUERY: DELETE FROM radius.radreply WHERE username = '00-00-00-00-00-00' AND op = ':=' AND value = '999999' AND attribute = 'Tunnel-Private-Group-ID' ;
+FixtureInstaller.remove(): FINISHED.
+--------------------------------------------------
+FixtureInstaller.__init__(): I'm done. Enjoy.
+--------------------------------------------------
+FixtureInstaller.__init__(): I'm done. Enjoy.
+--------------------------------------------------
+FixtureInstaller.__init__(): I'm done. Enjoy.
+SELECT id FROM radius.persistentHosts WHERE hostname = 'www.nic.pl';
+get_attr(): Got rows:
+()

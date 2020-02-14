@@ -1,0 +1,67 @@
+DONE:
+===========================================
+- testing/test-connector.py
+- testing/test-tools.py
+
+
+IN PROGRESS:
+===========================================
+- testing/test-database.py
+
+
+PROJECT SCOPE:
+===========================================
+
+radiussync (The Sync App)
+----------
+connector.py
+    class mysqlConnectionError( Exception )
+    class mysqlConnectionWarning( Warning )
+    class emptySetError( Exception )
+    class emptySetWarning( Warning )
+    class ValueWarning( Warning )
+    class mysqlConnect
+
+database.py
+    class Queries
+    class Collator
+
+tools.py
+    class IpAbacus
+    class IpBlender
+    class Authenticator
+
+radiussync (sync script itself)
+    * functions only
+    * extensive human testing already
+
+scripts/radcheck (CLI admin script)
+    * functions only
+    * extensive human testing already
+
+
+radiuscheck (The Web App)
+-----------
+forms.py
+    class ByNameOrMac( forms.ModelForm )
+    class AddHostForm( forms.ModelForm )
+    class EditHostForm( forms.ModelForm )
+
+models.py
+    * Verified by Django: no testing required
+    class PersistentHost( models.Model )
+    class Vlan (models.Model )
+
+urls.py
+    * Django config: no testing
+
+views.py
+    class StopPointReachedException( Exception )
+    class RadCheck
+    class RadEdit
+    class RadView( ListView )
+
+
+non-python components (of Web App)
+---------------------
+static/ajax.js: tested in FireBug

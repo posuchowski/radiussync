@@ -1,0 +1,352 @@
+#!/usr/bin/python
+
+#
+# Run an authentication check for all servers in inventory or manually specified server
+#
+import sys, argparse, re
+
+sys.path.append( "/home/peter/src/radiussync" )  # for dev; to work from project /scripts subdir
+
+from wiredtree.database.mysqlconnect import mysqlConnect
+from radiussync.tools import Authenticator
+
+DB_HOST = "localhost"
+DB_USER = "radiussync"
+DB_PASS = "I NEED A CIGARETTE"
+DB_INIT = "inventory"
+
+SELECTQ = '''
+    SELECT PACKAGES.servername, eth0_mac, eth1_mac
+    FROM inventory.servers LEFT JOIN ubersmith.PACKAGES on servers.package_id = PACKAGES.packid
+    WHERE servername = '%s';
+'''
+
+SELECTP = '''
+    SELECT hostname, mac_eth0, mac_eth1
+    FROM radius.persistentHosts
+    WHERE hostname = '%s';
+'''
+
+SELECTALL = '''
+    SELECT PACKAGES.servername, eth0_mac, eth1_mac
+    FROM inventory.servers LEFT JOIN ubersmith.PACKAGES on servers.package_id = PACKAGES.packid;
+'''
+
+SELECTCOMPLETE = '''
+    SELECT distinct( PACKAGES.servername ), servers.eth0_mac, servers.eth1_mac
+    FROM ubersmith.PACKAGES LEFT JOIN inventory.servers ON PACKAGES.packid = servers.package_id
+    WHERE servers.eth0_mac OR servers.eth1_mac IS NOT NULL
+    ORDER BY PACKAGES.servername;
+'''
+
+INSERTHOST = '''
+    INSERT INTO radius.persistentHosts ( last_mod, hostname, mac_eth0, mac_eth1, ip_eth0, ip_eth1,
+        vlan_id, notes ) VALUES ( NULL, "%s", "%s", "%s", "%s", "%s", "%s", "%s" );
+'''
+
+options = None
+radius  = None
+
+# Errors codes are accumulated bitwise and spit out by bork()
+# Even one authentication failure will set bit 7, so that $? & 128 == 128
+#
+#   1 = Option Error
+#   2 = Unimplemented Feature
+#
+#              ...
+#
+# 128 = Radius Authentication Failure 
+
+errors  = []
+
+def bork( msg=None, code=1 ):
+    if msg:
+        sys.stderr.write( msg + "\n" )
+        sys.exit( code )
+    for e in errors:
+        accumulator = 0
+        sys.stderr.write( e[0] + "\n" )
+        accumulator = accumulator | e[1]
+    sys.exit( accumulator )
+
+def parse_argv():
+    global options
+
+    parser = argparse.ArgumentParser(
+        description = 'Check Radius host MAC authentication'
+    )
+    parser.add_argument( '-a', '--all',      dest='ALL',      action='store_true', help="Check all MAC addresses in inventory.servers" )
+    parser.add_argument( '-v', '--verbose',  dest='verbose',  action='store_true', help="Less is not more. More is more." )
+    parser.add_argument( '-V', '--veryverbose', dest='veryverbose', action='store_true', help="If --verbose is after a 6-pack, this is after a 12-pack" )
+    parser.add_argument( '-c', '--count',    dest='count',    action='store_true', help="Print summary of checks and failures" )
+    parser.add_argument( '-Q', '--altquery', dest='altquery', action='store_true', help="Use alternative query with distinct servername and not null eth macs" )
+    parser.add_argument( '-I', '--insert',   dest='insert',   action='store_true', help="Insert a host into the persistentHosts table." )
+
+    parser.add_argument( '-b', '--box',     dest='hostname', help="Check by hostname / Specify hostname" )
+    parser.add_argument( '-m', '--mac',     dest='macaddrs', action='append', help="MAC address to insert into persistentHosts. May be specified multiple times" )
+    parser.add_argument( '-i', '--ip',      dest='ipaddrs',  action='append', help="IP address to insert into persistentHosts. May be specified multiple times" )
+    parser.add_argument( '-l', '--vlan',    dest='vlanid',   help="Vlan ID to insert into persistentHosts table." )
+    parser.add_argument( '-n', '--note',    dest='note',     help="Note(s) to include in persistentHosts entry." )
+
+    parser.add_argument( '-s', '--server',  dest='server',   default='localhost', help="Name or IP address of the Radius authentication server" )
+    parser.add_argument( '-S', '--secret',  dest='secret',   help="Shared secret to authenticate this client to Radius" )
+
+    parser.add_argument( '-u', '--username', dest='username',  default=None, help="Supplicant username (MAC address)" )
+    parser.add_argument( '-p', '--password', dest='password',  default=None, help="Supplicant password (also the MAC)" )
+
+#    parser.add_argument( '-M', '--myhost',   dest='mysqlhost', help="MySQL server hostname or IP" )
+#    parser.add_argument( '-U', '--myuser',   dest='mysqluser', help="MySQL username" )
+#    parser.add_argument( '-P', '--mypass',   dest='mysqlpass', help="MySQL password" )
+#    parser.add_argument( '-D', '--mydb',     dest='mysqldb',   help="MySQL database" )
+#    parser.add_argument( '-T', '--mytable',  dest='mytable',   help="MySQL table" )
+
+    options = parser.parse_args()
+
+    if options.veryverbose is True:
+        options.verbose = True
+
+def check_options():
+    if options.secret is None:
+        errors.append( ("ERROR: Radius server 'secret' must be specified.", 1) )
+    if options.server is None:
+        errors.append( ("ERROR: Programming error: server should default to 'localhost'", 16) )
+    if options.ALL is None and ( options.username is None or options.password is None):
+        errors.append( ("ERROR: Username and Password incompatible with --all or -a option", 1) )
+    if options.ALL and options.hostname:
+        errors.append( ( "ERROR: -b | --box contradicts -a | --all", 1 ) )
+    if options.ALL and options.insert:
+        errors.append( ( "ERROR: Option --insert | -I incompatible with --all | -a", 1 ) )
+   
+    # Missing info
+    if options.insert is None and options.server is None:
+        errors.append( ("ERROR: Radius server name or Ip must be specified", 1) )
+    if options.insert is None and options.secret is None:
+        errors.append( ("ERROR: Radius server shared secret must be specified", 1) )
+
+    if options.insert and ( not options.macaddrs or not options.vlanid ):
+        errors.append( ("ERROR: Not enough info for insert. Specify --box, --mac, and --vlan at least", 1) )
+
+    # Finally
+    if len( errors ) > 0:
+        bork()
+        
+def dump_options():
+    try:
+        sys.stderr.write( "--server\t%s\n" % options.server )
+        sys.stderr.write( "--secret\t%s\n" % options.secret )
+        sys.stderr.write( "--username\t%s\n" % options.username )
+        sys.stderr.write( "--password\t%s\n" % options.password )
+    except:
+        pass
+
+
+#
+# Action methods: return 0 or exit status
+#
+def check_supplied( user=None, passwd=None ):
+
+    if (user is None) and (passwd is None):
+        user   = options.username or options.password
+        passwd = options.password or options.username
+
+    if (user is None) or (passwd is None):
+        bork( "ERROR: Must supply a username and password to authenticate against.", 4 )
+
+    if options.veryverbose:
+        if radius.ask( user, passwd ):
+            return 0
+    else:
+        if radius.isGranted( user, passwd ):
+            return 0
+    return 128
+
+def check_db_box():
+    db = mysqlConnect( hostname=DB_HOST, username=DB_USER, password=DB_PASS, initdb=DB_INIT )
+    db.enable_warnings()
+    db.store_results()      # avoid 'out of sync' msg when throwing away result set
+    db.set_timeout( 8600 )
+
+    # try ubersmith.PACKAGES
+    if options.veryverbose:
+        print "Looking for %s in ubersmith.PACKAGES..." % options.hostname
+    db.execute( SELECTQ % options.hostname )
+
+    if db.num_rows() == 0:
+        if options.veryverbose:
+            print "Not there.\nLooking in radius.persistentHosts..."
+        # try radius.persistentHosts
+        db.execute( SELECTP % options.hostname )
+        if db.num_rows() == 0:
+            if options.veryverbose:
+                print "Not there either. Giving up."
+            bork( "Hostname could not be found anywhere. Try searching for its MAC address instead.", 128 )
+    if options.verbose:
+        print "Found host MAC addresses in database"
+
+    # only one iteration should happen
+    for s in db.iter_results():
+        host = s[0]
+        eth0 = eth1 = None
+        if s[1] is not None:
+            eth0 = re.sub( ':', '-', s[1] )
+        if s[2] is not None:
+            eth1 = re.sub( ':', '-', s[2] )
+    db.close()
+
+    result = 0
+    if eth0:
+        if options.verbose:
+            print "\nChecking %s, eth0 = %s" % ( host, eth0 )
+        result = check_supplied( eth0, eth0 )
+    if eth1:
+        if options.verbose:
+            print "\nChecking %s, eth1 = %s" % ( host, eth1 )
+        result = result | check_supplied( eth1, eth1 )
+    return result
+
+def check_all_boxen():
+    at_least_one_err = 0
+
+    num_total = num_failure = num_success = num_skipped = 0
+
+    db = mysqlConnect( hostname=DB_HOST, username=DB_USER, password=DB_PASS, initdb=DB_INIT )
+    db.enable_warnings()
+    db.store_results()
+
+    if options.altquery:
+        db.execute( SELECTCOMPLETE )
+    else:
+        db.execute( SELECTALL )
+
+    if options.verbose:
+        print "Query run. Now checking all boxen...\n"
+
+    for s in db.iter_results():
+        host = s[0]
+        eth0 = eth1 = None
+        if s[1] is not None:
+            eth0 = re.sub( ':', '-', s[1] )
+        if s[2] is not None:
+            eth1 = re.sub( ':', '-', s[2] )
+
+        if host is not None:
+            num_total += 2   # counting interfaces
+            result = 0
+            if options.verbose:
+                sys.stdout.write( "Checking %s ... \n" % host )
+
+            if eth0 is not None and eth0 != "":
+                r0 = check_supplied( eth0, eth0 )
+                if r0:
+                    num_failure += 1
+                else:
+                    num_success += 1
+            else:
+                if options.verbose:
+                    sys.stderr.write( "SKIP IFACE: No eth0 for %s: Skipping interface eth0\n" % host )
+                num_skipped += 1
+
+            if eth1 is not None and eth1 != "":
+                r1 = check_supplied( eth1, eth1 )
+                if r1:
+                    num_failure += 1
+                else:
+                    num_success += 1
+            else:
+                if options.verbose:
+                    sys.stderr.write( "SKIP IFACE: No eth1 for %s: Skipping interface eth1\n" % host )
+                num_skipped += 1
+
+            if r0 or r1:
+                if options.verbose:
+                    sys.stderr.write( "FAILED: %s\n" % host )            
+                else:
+                    print host
+                at_least_one_err = r0 | r1
+            else:
+                if options.verbose:
+                    sys.stdout.write( "OK\n" ) 
+
+        else:  # host is None
+
+            if options.verbose:
+                sys.stderr.write( "SKIP IFACE: %s and %s have no ubersmith.PACKAGES.servername: Skipping.\n" % ( eth0, eth1 ) )
+
+    db.close()
+    if options.count:
+        sys.stderr.write( "\nSUMMARY\nHostnames Found : %s\n" % ( num_total / 2 ) )
+        sys.stderr.write( "Total Interfaces: %s\n" % num_total   )
+        sys.stderr.write( "Ifaces Skipped  : %s\n" % num_skipped )
+        sys.stderr.write( "Ifaces Failed   : %s\n" % num_failure )
+        sys.stderr.write( "Ifaces SUCCEEDED: %s\n\n" % num_success )
+
+    return at_least_one_err
+
+def insert_box():
+    db = mysqlConnect( hostname=DB_HOST, username=DB_USER, password=DB_PASS, initdb=DB_INIT )
+    db.enable_warnings()
+    db.store_results()
+
+    macs = []; ips = []
+
+    # get macs or NULL
+    for m in range(2):
+        try:
+            x = options.macaddrs.pop()
+        except:
+            x = 'NULL'
+        macs.append( x )
+
+    # get ips or NULL
+    for i in range(2):
+        try:
+            x = options.ipaddrs.pop()
+        except:
+            x = 'NULL'
+        ips.append( x );
+
+    # sanitize 'notes'
+    if hasattr( options, 'note' ):
+        notes = options.note
+    else:
+        notes = ""
+    notes = notes.strip( ' "' )
+ 
+    entry = INSERTHOST % (
+                options.hostname,
+                macs[0],
+                macs[1],
+                ips[0],
+                ips[1],
+                options.vlanid,
+                notes
+    )
+    result = db.execute( entry )
+
+
+#
+# MAIN
+#
+
+if __name__ == '__main__':
+
+    action = None
+
+    parse_argv()
+    check_options()
+
+    radius = Authenticator( options.server, options.secret ) 
+
+    if options.ALL:
+        action = check_all_boxen
+    elif options.insert:
+        action = insert_box
+    elif options.hostname:
+        action = check_db_box
+    else:
+        action = check_supplied
+
+    result = action()
+    sys.exit( result )
+
+

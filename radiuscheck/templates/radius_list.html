@@ -1,0 +1,111 @@
+{% extends "radical.html" %}
+
+{% block main %}
+<div id="errdiv"></div>
+<div id="list_wrapper">
+    <br />
+    <span id="result_count">
+        {{ set|length }} Results Returned.
+    </span>
+    <span id="table_ctl">
+        Filter:&nbsp;
+        <select name="mode_select" id="mode_select">
+            {% for m, n in modes %}
+                {% if m == mode %}
+                    <option value="{{ m }}" selected>{{ n }}</option>
+                {% else %}
+                    <option value="{{ m }}">{{ n }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        &nbsp;&nbsp;&nbsp;
+        Sort By:
+        <select name="sortby" id="sortby_select">
+            {% for k, v in field_list %}
+                {% if k == sortby %}
+                    <option value={{ k }} selected>{{ v }}</option>
+                {% else %}
+                    <option value={{ k }}>{{ v }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        &nbsp;&nbsp;&nbsp;
+        Then By:
+        <select name="thenby" id="thenby_select">
+            {% for k, v in field_list %}
+                {% if k == thenby %}
+                    <option value={{ k }} selected>{{ v }}</option>
+                {% else %}
+                    <option value={{ k }}>{{ v }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </span>
+    <!-- <br />&nbsp;<br /> -->
+    <table id="host_list">
+
+        <th class="tabletop" colspan="9">
+            Radius Hosts: {{ nice_name }}
+        </th>
+        <tr class="head">
+            <td class="bord title">ID</td>
+            <td class="bord title">Hostname</td>
+            <td class="bord title">eth0 MAC</td>
+            <td class="bord title">eth1 MAC</td>
+            <td class="bord title">eth0 IP</td>
+            <td class="bord title">eth1 IP</td>
+            <td class="bord title">Vlan ID</td>
+            <td class="bord title">Notes</td>
+            <td class="bord title">Controls</td>
+        </tr>
+        {% for dict in set %}
+        <tr class="bord">
+            {% if dict.id %}
+                <td class="bord">{{ dict.id }}</td>
+            {% else %}
+                <td class="bord">--</td>
+            {% endif %}
+
+            <td class="bord">{{ dict.hostname }}</td>
+            <td class="bord">{{ dict.mac_eth0 }}</td>
+            <td class="bord">{{ dict.mac_eth1 }}</td>
+            {% if dict.source == 'P' %}
+                <td class="bord">{{ dict.ip_eth0 }}</td>
+            {% else %}
+                <td class="bord">{{ dict.ipaddr }}</td>
+            {% endif %}
+
+            {% if dict.source == 'P' %}
+                <td class="bord">{{ dict.ip_eth1 }}</td>
+            {% else %}
+                <td class="bord">&nbsp;</td>
+            {% endif %}
+
+            <td class="bord">{{ dict.vlan_id  }}</td>
+            
+            {% if dict.source == 'P' %}
+                <td class="bord">{{ dict.notes    }}</td>
+            {% else %}
+                <td class="bord">auto entry</td>
+            {% endif %}
+
+            <td class="bord" style="text-align:center;">
+                {% if dict.source == 'P' %}
+                    <button id="edit_button" type="button" value="Edit" onClick="return edit_entry({{ dict.id }});">Edit</button>&nbsp;
+                    <button id="del_button" type="button" value="Delete" onClick="return del_entry({{ dict.id }});">Delete</button>
+                {% else %}
+                    <span style="font-size:small; font-family:Courier; text-align:left; min-width:10em;">--</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div id="whitespace">
+    <br />&nbsp;
+    <br />&nbsp;
+    <br />&nbsp;
+</div>
+{% endblock main %}
+
+

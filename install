@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+use strict;
+use less "fat";
+
+# use File::Basename;
+use Shell qw( mkdir cp touch );
+
+# Libraries
+my @LIBS = ( 'connector.py',
+             'database.py',
+             'tools.py',
+             'ipabacus.py',
+             'system.py',
+           );
+
+# Executables (Scripts)
+my @EXES = ( 'scripts/radcheck',
+             'radiussync'
+           );
+
+# Web component (radiuscheck)
+my $WEB = "radiuscheck";
+
+my $EXE_DIR  = "/usr/local/bin/";
+my $BASE_DIR = "/usr/lib/python";
+my $WEB_DIR  = "/var/www/django-apps/apps";
+
+my $out = `python -V 2>&1`;
+my @all = split(/\s+/, $out);
+my @ver = split(/\./, $all[1] );
+
+my $PYTHON_VERSION = $ver[0] . "." . $ver[1];
+my $LIBDIR  = $BASE_DIR . $PYTHON_VERSION . "/site-packages/radiussync/";
+
+print "Installing modules under $LIBDIR ...\n";
+if( not -d $LIBDIR ) {
+    mkdir( $LIBDIR );
+}
+foreach my $lib( @LIBS ) {
+    cp( $lib, $LIBDIR );
+}
+
+print "Installing programs under $EXE_DIR ...\n";
+foreach my $exe( @EXES ) {
+    cp( $exe, $EXE_DIR );
+}
+
+print "Installing web components under $WEB_DIR ...\n";
+my $result = `cp -r $WEB $WEB_DIR`;
+        
+print "Touching __init__.py ...\n";
+touch( $LIBDIR . "__init__.py" );
+
+print "DONE.\n";

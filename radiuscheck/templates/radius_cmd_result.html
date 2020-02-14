@@ -1,0 +1,22 @@
+{% extends "radical.html" %}
+
+{% block main %}
+<div id="result_wrapper">
+    <div style="float:left; clear:both; height:3em;">
+        <br><h2>
+        {% if success %}
+            Success.
+        {% else %}
+            Whoops! An Error Occurred.
+        {% endif %}
+        </h2><br>
+    </div>
+    <br>&nbsp;<br>
+    <div id="result_msg">
+        {% autoescape off %}
+        <p>{{ message }}</p>
+        {% endautoescape %}
+        <p>It may take a moment for backend processes to finish updating the database.</p>
+    </div>
+</div>
+{% endblock %}

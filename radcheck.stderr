@@ -1,0 +1,23 @@
+SKIP IFACE: 00-30-48-D7-9E-98 and 00-30-48-D7-9E-99 have no ubersmith.PACKAGES.servername: Skipping.
+Traceback (most recent call last):
+  File "/usr/local/bin/radcheck", line 345, in <module>
+    result = action()
+  File "/usr/local/bin/radcheck", line 235, in check_all_boxen
+    r0 = check_supplied( eth0, eth0 )
+  File "/usr/local/bin/radcheck", line 152, in check_supplied
+    if radius.ask( user, passwd ):
+  File "/usr/lib/python2.6/site-packages/radiussync/tools.py", line 94, in ask
+    self._run( username, password )
+  File "/usr/lib/python2.6/site-packages/radiussync/tools.py", line 81, in _run
+    [ 'radtest', username, password, self.server, '8', self.secret ]
+  File "/usr/lib/python2.6/site-packages/radiussync/system.py", line 21, in __init__
+    self._runCommand()
+  File "/usr/lib/python2.6/site-packages/radiussync/system.py", line 31, in _runCommand
+    self.exit = self.subprocess.call( self.command, stdout=tmp_out, stderr=tmp_err )
+  File "/usr/lib64/python2.6/subprocess.py", line 478, in call
+    p = Popen(*popenargs, **kwargs)
+  File "/usr/lib64/python2.6/subprocess.py", line 639, in __init__
+    errread, errwrite)
+  File "/usr/lib64/python2.6/subprocess.py", line 1228, in _execute_child
+    raise child_exception
+TypeError: execv() arg 2 must contain only strings

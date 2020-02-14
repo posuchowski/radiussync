@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="{{ STATIC_URL }}radiuscheck/radcheck.css" />
+    <script type="application/javascript" src="{{ STATIC_URL }}radiuscheck/ajax.js" /></script>
+    <title>Radius Authentication</title>
+    {% if redirect_url %}
+        <meta http-equiv="refresh" content="{{ redirect_secs }};URL={{ redirect_url }}">
+    {% endif %}
+</head>
+
+<body onload="init();">
+    <div id="title"><h3>Radius Authentication</h3></div>
+    <hr>
+    <div id="link_bar">
+        <span>
+            <a href="/django/radius">Check Host or MAC</a>
+        </span>
+        <span id="middle">
+            <a href="/django/radius/radiusadd">Add Persistent Host</a>
+        </span>
+        <span id="right_choice">
+            <a href="/django/radius/radiusview">View/Delete Hosts</a></span>
+    </div>
+    <hr>
+
+    {% block main %}{% endblock main %}
+
+</body>
+</html>
